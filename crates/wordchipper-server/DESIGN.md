@@ -9,6 +9,66 @@ needing to integrate the tokenizer library directly.
 **Philosophy**: Spend network to avoid software integration complexity on the
 client side.
 
+## Inspirational Reference: Have Quick
+
+The [havequick](file:///Users/csg/wyrdward/havequick/) project provides a
+strong set of ideas we should draw from as this design matures.
+
+### Five Primitives
+
+Have Quick reduces all composition to five primitives:
+
+```
+Socket ──parse──> Protocol ──functor──> TypedValue ──dispatch──> Effect
+```
+
+| Primitive | What it does |
+|-----------|--------------|
+| Socket | Transport (bytes to bytes) |
+| Protocol | Parser (bytes to Message[T]) |
+| Functor | Transform (Message[A] to Message[B]) |
+| Type dispatch | Route by type_hash |
+| Composition | Glue pipelines together |
+
+Our protocol adapters are functors in this sense — structure-preserving
+transforms between wire representations and canonical types. The service core
+is dispatch. The pipeline should be that clean.
+
+### Three-Plate Quality
+
+Truth from cross-validation, not authority:
+
+- **Plate 1: Unit tests** — isolated correctness
+- **Plate 2: Fuzz testing** — random input stress
+- **Plate 3: Chaos testing** — controlled corruption of middles
+
+We should apply this to the server: unit tests for each layer, fuzz the
+adapters with malformed wire data, chaos-test the service under concurrent
+load with poisoned inputs and dropped connections.
+
+### 3D UNIX Pipes
+
+UNIX pipes in three dimensions: **typed-data** (what it IS), **context**
+(where it came FROM), **intention** (what sender WANTS). When all three agree,
+the message flows. Our Content-Type / model / verb triple is a lightweight
+version of this. Worth keeping that framing as we add protocols.
+
+### Algebraic Correctness
+
+> A program is a morphism between groups. Correct means the diagram commutes.
+
+If we encode text through the JSON adapter and through the msgpack adapter,
+and both produce the same canonical EncodeRequest, and the service produces
+the same tokens — the diagram commutes. That's a testable fact. Each adapter
+is a plate. Cross-validation between adapters is the scraping.
+
+### Witnesses
+
+> The path is witnessed. Logs, traces, proofs are witnesses.
+
+Request IDs, latency traces, and the metrics counters are witnesses of the
+system's behavior. Not afterthoughts — structural participants.
+
 ## Architecture
 
 ```
